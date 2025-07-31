@@ -1,10 +1,8 @@
 import boto3
 from flask import Flask, request, redirect
+from Config import *
 
 s3 = boto3.client('s3')
-# 설정
-S3_BUCKET_NAME = 'ttack-dae'
-
 app = Flask(__name__)
 
 @app.route('/upload', methods=['POST'])
@@ -20,7 +18,7 @@ def upload_file():
     try:
         s3.upload_fileobj(
             file,                  # 업로드할 파일 객체
-            S3_BUCKET_NAME,        # 버킷 이름
+            BUCKET_NAME,        # 버킷 이름
             file.filename,         # S3에 저장될 파일 이름
             ExtraArgs={
                 'ContentType': file.content_type  # 파일 타입 지정 (예: 'image/jpeg')
@@ -33,4 +31,4 @@ def upload_file():
         return "업로드 중 오류가 발생했습니다.", 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=80)
+    app.run(host='0.0.0.0', port=5000)
