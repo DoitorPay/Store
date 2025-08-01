@@ -2,7 +2,7 @@ import boto3
 from flask import Flask, request, redirect
 from Config import *
 
-s3 = boto3.client('s3')
+s3 = boto3.client('s3', region_name='ap-northeast-2')
 app = Flask(__name__)
 
 @app.route('/upload', methods=['POST'])
@@ -42,7 +42,7 @@ def send_file():
         )
 
         # 생성된 URL로 사용자 브라우저를 리디렉션
-        return redirect(url)
+        return url
 
     except Exception as e:
         # 파일이 존재하지 않거나 다른 S3 오류 처리
