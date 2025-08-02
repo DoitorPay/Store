@@ -151,8 +151,8 @@ class GetUrl(Resource):
     @download_ns.response(404, '파일을 찾을 수 없습니다.')
     @download_ns.response(500, '서버 오류가 발생했습니다.')
     def get(self):
-        args = download_model.parse_args()
-        filename_key = args['filename']
+        args = request.get_json()
+        filename_key = self.__parseName(args)
 
         try:
             # URL은 3600초(1시간) 동안 유효합니다.
@@ -164,13 +164,26 @@ class GetUrl(Resource):
             return url, 200
 
         except Exception as e:
-            # Boto3의 ClientError를 더 구체적으로 처리할 수 있습니다.
-            # from botocore.exceptions import ClientError
-            # if isinstance(e, ClientError) and e.response['Error']['Code'] == 'NoSuchKey':
-            #     return {'message': '파일을 찾을 수 없습니다.'}, 404
-
-            print(e)
             return {'message': '다운로드 URL 생성 중 오류가 발생했습니다.'}, 500
+
+    def __parseName(self, args):
+        reason = args['reason']
+
+        if reason == 'userProfile':
+            user_id = args['userId']
+            user_sns = args['userSns']
+            return f"{user_id}_{user_sns}_userProfile"
+        elif reason == 'groupProfile':
+            gid = args['gid']
+            return f"{gid}_groupProfile"
+        elif reason == 'punishProfile':
+            user_id = args['userId']
+            user_sns = args['userSns']
+            gid = args['gid']
+            punish_id = args['punishId']
+            return f"{user_id}_{user_sns}_{gid}_{punish_id}_punish"
+        else:
+            return "잘못된 요청입니다, 400"
 
 
 if __name__ == '__main__':
