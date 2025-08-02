@@ -1,18 +1,22 @@
 import os
 from flask import Flask, request, redirect
 from flask_restx import Api, Resource, Namespace, reqparse, fields
+from flask_cors import CORS
+
 from werkzeug.datastructures import FileStorage
 import boto3
 
+from Config import *
+
 # 예시를 위해 Config 값을 여기에 정의합니다.
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-# 중요: 실제 AWS S3 버킷 이름으로 변경해야 합니다.
-BUCKET_NAME = 'your-s3-bucket-name'
 
 app = Flask(__name__)
+CORS(app, origins="http://localhost:8000")
 api = Api(app, version='1.0', title='File Upload API',
           description='사용자, 그룹, 인증 파일 업로드를 위한 API',
           doc='/api-docs/')
+
 s3 = boto3.client('s3', region_name='ap-northeast-2')
 
 upload_ns = Namespace('uploads', description='파일 업로드 관련 API')
@@ -39,6 +43,7 @@ def upload_file_on_s3(file, filename):
         }
     )
 
+
 file_upload_parser = reqparse.RequestParser()
 file_upload_parser.add_argument('image', location='files', type=FileStorage, required=True, help='업로드할 이미지 파일')
 
@@ -54,6 +59,7 @@ punish_feed_parser.add_argument('userId', type=str, required=True, help='사용�
 punish_feed_parser.add_argument('userSns', type=str, required=True, help='사용자 SNS 종류', location='form')
 punish_feed_parser.add_argument('groupId', type=str, required=True, help='그룹 고유 ID', location='form')
 punish_feed_parser.add_argument('punishId', type=str, required=True, help='인증(벌칙) 고유 ID', location='form')
+
 
 @upload_ns.route('/user-profile')
 class UploadUserProfile(Resource):
@@ -141,17 +147,21 @@ download_model = download_ns.model("이미지 요청을 위한 모델", {
 download_parser = reqparse.RequestParser()
 download_parser.add_argument('reason', type=str, required=True, help='요청 이유: userProfile, groupProfile, punish 셋중 하나')
 download_parser.add_argument('userId', type=str, required=False, help="유저의 id, reason이 userProfile, punish일 때만 필요")
-download_parser.add_argument('userSns', type=str, required=False, help="유저가 가입한 sns, reason이 userProfile, punish일 때만 필요")
+download_parser.add_argument('userSns', type=str, required=False,
+                             help="유저가 가입한 sns, reason이 userProfile, punish일 때만 필요")
 download_parser.add_argument('gid', type=str, required=False, help="그룹 id, reason이 groupProfile, punish일 때만 필요")
 download_parser.add_argument('punish_id', type=str, required=False, help="벌칙 id, reason이 userProfile, punish일 때만 필요")
+
+
 @download_ns.route('/image')
 class GetUrl(Resource):
     @download_ns.expect(download_model)
     @download_ns.response(200, 'URL이 성공적으로 생성되었습니다.')
     @download_ns.response(404, '파일을 찾을 수 없습니다.')
     @download_ns.response(500, '서버 오류가 발생했습니다.')
-    def get(self):
+    def post(self):
         args = request.get_json()
+
         filename_key = self.__parseName(args)
 
         try:
