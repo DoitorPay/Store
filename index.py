@@ -138,7 +138,12 @@ download_model = download_ns.model("이미지 요청을 위한 모델", {
     'gid': fields.String(description="그룹 id, reason이 groupProfile, punish일 때만 필요"),
     'punish_id': fields.String(description="벌칙 id, reason이 userProfile, punish일 때만 필요")
 })
-
+download_parser = reqparse.RequestParser()
+download_parser.add_argument('reason', type=str, required=True, help='요청 이유: userProfile, groupProfile, punish 셋중 하나')
+download_parser.add_argument('userId', type=str, required=False, help="유저의 id, reason이 userProfile, punish일 때만 필요")
+download_parser.add_argument('userSns', type=str, required=False, help="유저가 가입한 sns, reason이 userProfile, punish일 때만 필요")
+download_parser.add_argument('gid', type=str, required=False, help="그룹 id, reason이 groupProfile, punish일 때만 필요")
+download_parser.add_argument('punish_id', type=str, required=False, help="벌칙 id, reason이 userProfile, punish일 때만 필요")
 @download_ns.route('/image')
 class GetUrl(Resource):
     @download_ns.expect(download_model)
